@@ -7,8 +7,52 @@ from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 from utils import *
                          
+def preprocess_dataset():
+    '''
+    split: train/val split
+    portion: portion of the axial slices that enter the dataset
 
-data_path = '/home/marcon/Documents/Data/acerta_RST/'
+    first  (x) = Left-to-Right -- Sagital
+    second (y) = Posterior-to-Anterior --Coronal
+    third  (z) = Inferior-to-Superior  --Axial [-orient LPI]
+    '''
+    portion = 0.8
+    for i, data in enumerate(dataset):
+        if i % 50 == 0:
+            print('Loading %d/%d' % (i, len(dataset)))
+        filename = os.path.join(ctx["dataset_path"], 'gm', data['subject'] + '_gm.nii.gz')
+        input_image = torch.FloatTensor(nib.load(filename).get_fdata())
+        input_image = input_image.permute(2, 0, 1)
+        # if not data['subject'] == 'sub2394':
+        #     filename_wm = os.path.join(ctx["dataset_path"], 'wm', data['subject'] + '_wm.nii.gz')
+        #     input_image_wm = torch.FloatTensor(nib.load(filename_wm).get_fdata())
+        #     input_image_wm = input_image_wm.permute(2, 0, 1)
+
+        start = int((1.-portion)*input_image.shape[0])
+        end = int(portion*input_image.shape[0])
+        input_image = input_image[start:end,:,:]
+        for slice_idx in range(input_image.shape[0]):
+            slice = input_image[slice_idx,:,:]
+            slice = slice.unsqueeze(0)
+            slices.append({
+                'image': slice,
+                'age': data['age']
+            })
+
+        # start_wm = int((1.-portion)*input_image_wm.shape[0])
+        # end_wm = int(portion*input_image_wm.shape[0])
+        # input_image_wm = input_image_wm[start_wm:end_wm,:,:]
+        # for slice_idx in range(input_image_wm.shape[0]):
+        #     slice = input_image_wm[slice_idx,:,:]
+        #     slice = slice.unsqueeze(0)
+        #     slices.append({
+        #         'image': slice,
+        #         'age': data['age']
+        #     })
+
+
+# data_path = '/home/marcon/Documents/Data/acerta_RST/'
+data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
 dataset = []
 
 control_paths = glob(data_path + '/SCHOOLS/visit1/' + '*nii.gz')

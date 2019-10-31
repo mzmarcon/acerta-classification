@@ -11,7 +11,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Device:',device)
 
 params = { 'batch_size': 4,
-           'learning_rate': 1e-6,
+           'learning_rate': 1e-4,
            'weight_decay': 6e-2,
            'epochs': 5 }
 
@@ -48,7 +48,7 @@ for e in range(params['epochs']):
         label = Variable(data['label']).float().to(device)
 
         # print('Label:',label)
-        print('Output:',output)
+        # print('Output:',output)
         # print('Output:',output.shape)
 
         loss = criterion(output, label.unsqueeze(1))
@@ -88,12 +88,12 @@ for e in range(params['epochs']):
         correct = (prediction == label).float().sum()
         accuracy.append(correct / label.shape[0])
 
-        print('Output:',output)
+        print('Output:',output[0])
 
-        # print('Label:',label)
-        # print('Prediction:',prediction)
-        # print('Acc:',accuracy[-1])
-        if iterations % 5 == 0:
-            print('Accuracy:', np.mean(accuracy))
+        print('Label:',label)
+        print('Prediction:',prediction)
+        print('Acc:',accuracy[-1])
+        # if iterations % 5 == 0:
+        #     print('Accuracy:', np.mean(accuracy))
 
     print('Validation Loss: {:.3f}'.format(np.mean(val_loss)))

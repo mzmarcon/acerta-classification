@@ -10,7 +10,8 @@ from utils import *
 
 class ACERTA_data(object):
     def __init__(self, set, split=0.8):
-        data_path = '/home/marcon/Documents/Data/acerta_data/acerta_RST/'
+        # data_path = '/home/marcon/Documents/Data/acerta_data/acerta_RST/'
+        data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
         self.dataset = []
 
         control_paths = glob(data_path + '/SCHOOLS/visit1/' + '*nii.gz')
@@ -47,7 +48,7 @@ class ACERTA_data(object):
         min_size = np.min(sizes)
         for n in range(len(timeseries)):
             timeseries[n] = timeseries[n][:min_size]
-            #turn half of condition to 0 for testing classification
+            # # turn half of condition to 0 for testing classification
             # if n>48:
             #     timeseries[n][int(0.5*len(timeseries[n])):] = 0
 
@@ -80,3 +81,37 @@ class ACERTA_data(object):
 
     def __len__(self):
         return len(self.dataset)
+
+    def preprocess_dataset(self):
+        for i, data in enumerate(self.dataset):
+            if i % 50 == 0:
+                print('Loading %d/%d' % (i, len(self.dataset)))
+            filename = os.path.join(self.ctx["dataset_path"], 'gm', data['subject'] + '_gm.nii.gz')
+            input_image = torch.FloatTensor(nib.load(filename).get_fdata())
+            input_image = input_image.permute(2, 0, 1)
+            # if not data['subject'] == 'sub2394':
+            #     filename_wm = os.path.join(self.ctx["dataset_path"], 'wm', data['subject'] + '_wm.nii.gz')
+            #     input_image_wm = torch.FloatTensor(nib.load(filename_wm).get_fdata())
+            #     input_image_wm = input_image_wm.permute(2, 0, 1)
+
+            start = int((1.-self.portion)*input_image.shape[0])
+            end = int(self.portion*input_image.shape[0])
+            input_image = input_image[start:end,:,:]
+            for slice_idx in range(input_image.shape[0]):
+                slice = input_image[slice_idx,:,:]
+                slice = slice.unsqueeze(0)
+                self.slices.append({
+                    'image': slice,
+                    'age': data['age']
+                })
+
+            # start_wm = int((1.-self.portion)*input_image_wm.shape[0])
+            # end_wm = int(self.portion*input_image_wm.shape[0])
+            # input_image_wm = input_image_wm[start_wm:end_wm,:,:]
+            # for slice_idx in range(input_image_wm.shape[0]):
+            #     slice = input_image_wm[slice_idx,:,:]
+            #     slice = slice.unsqueeze(0)
+            #     self.slices.append({
+            #         'image': slice,
+            #         'age': data['age']
+            #     })
