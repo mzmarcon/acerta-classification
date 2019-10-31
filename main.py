@@ -49,7 +49,7 @@ for e in range(params['epochs']):
 
         # print('Label:',label)
         print('Output:',output)
-        print('Output:',output.shape)
+        # print('Output:',output.shape)
 
         loss = criterion(output, label.unsqueeze(1))
         losses.append(loss.item())
@@ -67,7 +67,8 @@ for e in range(params['epochs']):
     print('Validation...')
     model.eval()
     val_loss = []
-    predictionss = []
+    accuracy = []
+    iterations = 0
     for i, data in enumerate(val_loader):
         input_data = Variable(data['input']).to(device)
         input_data = input_data.unsqueeze(1)
@@ -83,9 +84,16 @@ for e in range(params['epochs']):
         optimizer.step()
         iterations += 1          
 
-        # if output 
+        prediction = (output > 0).float()
+        correct = (prediction == label).float().sum()
+        accuracy.append(correct / label.shape[0])
 
-        # if iterations % 5 == 0:
-        #     print('Validation Loss:', np.mean(val_loss))
+        print('Output:',output)
+
+        # print('Label:',label)
+        # print('Prediction:',prediction)
+        # print('Acc:',accuracy[-1])
+        if iterations % 5 == 0:
+            print('Accuracy:', np.mean(accuracy))
 
     print('Validation Loss: {:.3f}'.format(np.mean(val_loss)))
