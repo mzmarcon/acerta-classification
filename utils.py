@@ -6,6 +6,7 @@ from nilearn.input_data import NiftiLabelsMasker
 import numpy as np 
 from nilearn import plotting 
 from nilearn.connectome import ConnectivityMeasure
+import torch
 
 def get_region_timeseries(file_list, atlas):
     timeseries_list = []
@@ -39,3 +40,36 @@ def plot_correlation_matrix(correlation_matrix, atlas_data):
     plotting.plot_matrix(correlation_matrix, figure=(10, 8), labels=labels, 
                          vmax=0.8, vmin=-0.8, reorder=True) 
     plotting.show()
+
+
+def preprocess_dataset(filenames,labels,ids):
+    '''
+    Split images in slices.
+
+    portion: portion of the axial slices that enter the dataset.
+    first  (x) = Left-to-Right -- Sagital
+    second (y) = Posterior-to-Anterior --Coronal
+    third  (z) = Inferior-to-Superior  --Axial [-orient LPI]
+    '''
+
+    slices_data = []
+    portion = 0.8
+    for i, filename in enumerate(filenames):
+        if i % 50 == 0:
+            print('Loading %d/%d' % (i, len(filenames)))
+        input_image = torch.FloatTensor(nib.load(filename).get_fdata())
+        input_image = input_image.permute(2, 0, 1)
+
+        start = int((1.-portion)*input_image.shape[0])
+        end = int(portion*input_image.shape[0])
+        input_image = input_image[start:end,:,:]
+        for slice_idx in range(input_image.shape[0]):
+            slice = input_image[slice_idx,:,:]
+            slice = slice.unsqueeze(0)
+            slices_data.append({
+                'image': slice,
+                'label': labels[i],
+                'id': ids[i]
+            })
+    
+    return slices_data
