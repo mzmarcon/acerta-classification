@@ -50,7 +50,7 @@ class VGGBasedModel2D(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(6144, 2048),
+            nn.Linear(512, 2048),
             # nn.BatchNorm1d(1024),
             nn.ReLU(),
             nn.Dropout(),
