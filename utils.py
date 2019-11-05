@@ -42,7 +42,7 @@ def plot_correlation_matrix(correlation_matrix, atlas_data):
     plotting.show()
 
 
-def preprocess_dataset(filenames,labels,ids):
+def preprocess_dataset(filenames,labels,ids, mask_data):
     '''
     Split images in slices.
 
@@ -57,7 +57,9 @@ def preprocess_dataset(filenames,labels,ids):
     for i, filename in enumerate(filenames):
         if i % 50 == 0:
             print('Loading %d/%d' % (i, len(filenames)))
-        input_image = torch.FloatTensor(nib.load(filename).get_fdata())
+        input_image = nib.load(filename).get_fdata()
+        input_image = torch.FloatTensor(input_image * mask_data)
+
         input_image = input_image.permute(2, 0, 1)
 
         start = int((1.-portion)*input_image.shape[0])

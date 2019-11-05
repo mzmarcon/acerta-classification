@@ -11,9 +11,13 @@ from utils import *
 
 class ACERTA_data(Dataset):
     def __init__(self, set, split=0.8, transform=None):
-        # data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
-        data_path = '/home/marcon/datasets/acerta_data/acerta_TASK/'
-
+        data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
+        mask_path = '/home/marcon/Documents/Data/SCHOOLS/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        
+        # data_path = '/home/marcon/datasets/acerta_data/acerta_TASK/'
+        # mask_path = '/home/marcon/docs/Data/Files_Matheus/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        
+        mask_data = nib.load(mask_path).get_fdata()
         self.dataset = []
 
         control_paths = glob(data_path + 'SCHOOLS/visit1/' + '*nii.gz')
@@ -37,12 +41,9 @@ class ACERTA_data(Dataset):
                                                     train_size=split, random_state=42, stratify=labels)
 
         if set == 'training':
-            self.dataset = preprocess_dataset(train_set, train_labels, train_ids)
+            self.dataset = preprocess_dataset(train_set, train_labels, train_ids, mask_data)
         if set == 'validation':
-            self.dataset = preprocess_dataset(val_set, val_labels, val_ids)
-
-        # self.transform = transforms.Compose([transforms.Normalize(mean=0.5,
-        #                                                           std=0.5)])
+            self.dataset = preprocess_dataset(val_set, val_labels, val_ids, mask_data)
 
 
     def __getitem__(self, idx):
@@ -54,16 +55,6 @@ class ACERTA_data(Dataset):
             'id'    : data['id']
         }
 
-        # transformed = {
-        #     'input': data['image']
-        # }
-
-        # transformed = self.transform(transformed['input'])
-
-        # return {
-        #     'input': torch.FloatTensor(transformed['image']),
-        #     'label': data['label']
-        # }
 
     def __len__(self):
         return len(self.dataset)
