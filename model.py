@@ -11,6 +11,7 @@ class VGGBasedModel2D(nn.Module):
             nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.Conv2d(128, 128, 3, padding=1),
+            # nn.Dropout2d(),
             nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2),
@@ -19,6 +20,8 @@ class VGGBasedModel2D(nn.Module):
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, 3, padding=1),
+            # nn.Dropout2d(),
+            #
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(2),
@@ -27,6 +30,8 @@ class VGGBasedModel2D(nn.Module):
             nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, 3, padding=1),
+            # nn.Dropout2d(),
+            #
             nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(2),
@@ -35,6 +40,7 @@ class VGGBasedModel2D(nn.Module):
             nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.Conv2d(512, 512, 3, padding=1),
+            #
             nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.MaxPool2d(2),
@@ -43,6 +49,8 @@ class VGGBasedModel2D(nn.Module):
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, 3, padding=1),
+            #nn.Dropout2d(),
+
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.MaxPool2d(2),
@@ -50,13 +58,14 @@ class VGGBasedModel2D(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(512, 2048),
+            # nn.Linear(512, 2048),
+            nn.Linear(512, 1024),
             # nn.BatchNorm1d(1024),
             nn.ReLU(),
             nn.Dropout(),
-            nn.Linear(2048, 1024),
-            nn.ReLU(),
-            nn.Dropout(),
+            # nn.Linear(2048, 1024),
+            # nn.ReLU(),
+            # nn.Dropout(),
             nn.Linear(1024, 512),
             nn.ReLU(),
             nn.Dropout(),
