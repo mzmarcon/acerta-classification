@@ -88,23 +88,14 @@ class VGGBased2(nn.Module):
     def __init__(self):
         super(VGGBased2, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(1, 128, 3, padding=1),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(1, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.Conv2d(128, 256, 3, padding=1),
-            # nn.Dropout2d(),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-
-            nn.Conv2d(256, 256, 3, padding=1),
-            nn.BatchNorm2d(256),
-            nn.ReLU(),
-            nn.Conv2d(256, 128, 3, padding=1),
+            nn.Conv2d(64, 128, 3, padding=1),
             # nn.Dropout2d(),
             nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(4),
 
             nn.Conv2d(128, 128, 3, padding=1),
             nn.BatchNorm2d(128),
@@ -114,19 +105,20 @@ class VGGBased2(nn.Module):
 
             nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(4),
 
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(4032, 2048),
-            # nn.Linear(512, 256),
+            nn.Linear(768, 2048),
             # nn.BatchNorm1d(1024),
             nn.ReLU(),
             nn.Dropout(),
+            
             nn.Linear(2048, 512),
-            # nn.ReLU(),
-            # nn.Dropout(),
+            nn.ReLU(),
+            nn.Dropout(),
+            
             nn.Linear(512, 128),
             nn.ReLU(),
             nn.Dropout(),

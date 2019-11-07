@@ -11,13 +11,17 @@ from utils import *
 
 class ACERTA_data(Dataset):
     def __init__(self, set, split=0.8, transform=None):
-        data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
-        mask_path = '/home/marcon/Documents/Data/SCHOOLS/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
-        
-        # data_path = '/home/marcon/datasets/acerta_data/acerta_TASK/'
-        # mask_path = '/home/marcon/docs/Data/Files_Matheus/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        # data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
+        # mask_path = '/home/marcon/Documents/Data/SCHOOLS/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        # atlas_path = '/home/marcon/Documents/Data/niftis/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
+
+        data_path = '/home/marcon/datasets/acerta_data/acerta_TASK/'
+        mask_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        atlas_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
         
         mask_data = nib.load(mask_path).get_fdata()
+        atlas_data = nib.load(atlas_path).get_fdata()
+        
         self.dataset = []
 
         control_paths = glob(data_path + 'SCHOOLS/visit1/' + '*nii.gz')
@@ -36,14 +40,16 @@ class ACERTA_data(Dataset):
         #load data
         file_paths = control_paths + condition_paths
 
+        image_data = load_dataset(file_paths, atlas_data, discard=True)
+
         train_set, val_set, train_ids, val_ids, \
-        train_labels, val_labels  = train_test_split(file_paths, ids, labels,
+        train_labels, val_labels  = train_test_split(image_data, ids, labels,
                                                     train_size=split, random_state=42, stratify=labels)
 
         if set == 'training':
-            self.dataset = preprocess_dataset(train_set, train_labels, train_ids, mask_data)
+            self.dataset = preprocess_dataset(train_set, train_labels, train_ids)
         if set == 'validation':
-            self.dataset = preprocess_dataset(val_set, val_labels, val_ids, mask_data)
+            self.dataset = preprocess_dataset(val_set, val_labels, val_ids)
 
 
     def __getitem__(self, idx):

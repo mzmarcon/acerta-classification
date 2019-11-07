@@ -41,6 +41,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=params['learning_rate'],
 
 for e in range(params['epochs']):
     print('Epoch:',e)
+    print('Training...')
     model.train()
     losses = []
     accuracy = []
@@ -64,7 +65,7 @@ for e in range(params['epochs']):
         accuracy.append((total_correct / label.shape[0]))
 
         if iterations % 10 == 0:
-            print('Training Loss: {:.3f}'.format(loss.item()))
+            print('Training Loss: {:.3f}'.format(np.mean(losses)))
 
     print('Training Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
 
@@ -93,13 +94,13 @@ for e in range(params['epochs']):
             predictions[int(data['id'][n])].append(int(correct[n])) 
 
         if iterations % 50 == 0:
-            print('Validation Loss: {:.3f}'.format(loss.item()))
+            print('Validation Loss: {:.3f}'.format(np.mean(val_loss)))
 
     voting_acc = []
     for subject in list(predictions.keys()):
         sub_score = np.array(predictions[subject]).sum() / len(predictions[subject])
         voting_acc.append([1 if sub_score > 0.5 else 0])
-    
+
     print('Validation Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
     print('Voting Accuracy: {:.3f}'.format(np.mean(voting_acc)))
     torch.save(model.state_dict(), checkpoint)

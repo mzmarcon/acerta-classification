@@ -8,41 +8,7 @@ from nilearn import plotting
 from nilearn.connectome import ConnectivityMeasure
 import torch
 
-def get_region_timeseries(file_list, atlas):
-    timeseries_list = []
-    for file in file_list:
-        # masked_data = apply_mask(file,mask) #full masked-timeseries - no atlas(features x samples)
-        masker = NiftiLabelsMasker(labels_img=atlas, standardize=True, 
-                                    memory='nilearn_cache', verbose=5)
-        timeseries = masker.fit_transform(file) 
-        timeseries_list.append(timeseries)
-
-    return np.array(timeseries_list)
-
-def get_correlation_matrix(region_timeseries):
-    correlation_matrix = []
-    correlation_measure = ConnectivityMeasure(kind='correlation') 
-
-    for item in region_timeseries:
-        matrix = correlation_measure.fit_transform([item])[0]
-        correlation_matrix.append(matrix)
-
-    return np.array(correlation_matrix)
-
-def plot_correlation_matrix(correlation_matrix, atlas_data):
-    # Make a large figure 
-    # Mask the main diagonal for visualization: 
-    np.fill_diagonal(correlation_matrix, 0) 
-    # The labels we have start with the background (0), hence we skip the 
-    # first label 
-    # matrices are ordered for block-like representation 
-    labels = np.unique(atlas_data)
-    plotting.plot_matrix(correlation_matrix, figure=(10, 8), labels=labels, 
-                         vmax=0.8, vmin=-0.8, reorder=True) 
-    plotting.show()
-
-
-def preprocess_dataset(filenames,labels,ids, mask_data):
+def preprocess_dataset(image_data,labels,ids):
     '''
     Split images in slices.
 
@@ -51,15 +17,10 @@ def preprocess_dataset(filenames,labels,ids, mask_data):
     second (y) = Posterior-to-Anterior --Coronal
     third  (z) = Inferior-to-Superior  --Axial [-orient LPI]
     '''
-
     slices_data = []
     portion = 0.8
-    for i, filename in enumerate(filenames):
-        if i % 50 == 0:
-            print('Loading %d/%d' % (i, len(filenames)))
-        input_image = nib.load(filename).get_fdata()
-        input_image = torch.FloatTensor(input_image * mask_data)
-
+    for i, input_image in enumerate(image_data):
+        input_image = torch.FloatTensor(input_image)
         input_image = input_image.permute(2, 0, 1)
 
         start = int((1.-portion)*input_image.shape[0])
@@ -75,3 +36,33 @@ def preprocess_dataset(filenames,labels,ids, mask_data):
             })
     
     return slices_data
+
+
+def load_dataset(filenames, atlas_data, discard=False):
+
+    if discard:
+        discarded_regions = [0, 1, 2, 3, 4, 5, 19, 20, 21, 22, 23, 9, 10, 11, 14, 
+                            33, 34, 35, 36, 37, 38, 39, 45, 44, 47, 71, 78, 79, 
+                            81, 96, 94, 62, 60]
+
+        atlas_data[np.isin(atlas_data, discarded_regions)] = 0
+        atlas_data[np.isin(atlas_data, discarded_regions, invert=True)] = 1
+
+    else:
+        atlas_data[np.isin(atlas_data, 0, invert=True)] = 1
+
+    image_data = []
+    for i, filename in enumerate(filenames):
+        if i % 10 == 0:
+            print('Loading %d/%d' % (i, len(filenames)))
+        data = nib.load(filename).get_fdata()
+        data = data * atlas_data
+        image_data.append(data)
+
+    #zscore padronization
+    image_data = (image_data - np.mean(image_data)) / (np.std(image_data) + 1e-6)
+
+    #scaling normalization
+    # image_data = (image_data - np.min(image_data)) / (np.max(image_data) - np.min(image_data))
+
+    return image_data
