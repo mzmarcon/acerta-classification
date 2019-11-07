@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 from collections import defaultdict
 from dataset_loader import ACERTA_data 
-from model import VGGBasedModel2D, VGGBased2
+from model import VGGBasedModel2D, VGGBased2, VGGVolume2D
 import sys 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -13,8 +13,8 @@ print('Device:',device)
 
 checkpoint = 'checkpoints/checkpoint.pth'
 
-params = { 'train_batch_size': 40,
-           'val_batch_size': 4,
+params = { 'train_batch_size': 4,
+           'val_batch_size': 1,
            'learning_rate': 1e-5,
            'weight_decay': 1e-1,
            'epochs': 100 }
@@ -33,7 +33,8 @@ val_loader = DataLoader(validation_set, shuffle=False, drop_last=False,
 criterion = nn.BCEWithLogitsLoss()
 
 # model = VGGBasedModel2D()
-model = VGGBased2()
+# model = VGGBased2()
+model = VGGVolume2D()
 model.to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=params['learning_rate'],
@@ -64,7 +65,7 @@ for e in range(params['epochs']):
         total_correct = correct.sum()
         accuracy.append((total_correct / label.shape[0]))
 
-        if iterations % 10 == 0:
+        if iterations % 5 == 0:
             print('Training Loss: {:.3f}'.format(np.mean(losses)))
 
     print('Training Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
@@ -89,18 +90,18 @@ for e in range(params['epochs']):
         total_correct = correct.sum()
         accuracy.append(total_correct / label.shape[0])
 
-        #voting classification
-        for n in range(params['val_batch_size']): 
-            predictions[int(data['id'][n])].append(int(correct[n])) 
+        # #voting classification
+        # for n in range(params['val_batch_size']): 
+        #     predictions[int(data['id'][n])].append(int(correct[n])) 
 
-        if iterations % 50 == 0:
+        if iterations % 4 == 0:
             print('Validation Loss: {:.3f}'.format(np.mean(val_loss)))
 
-    voting_acc = []
-    for subject in list(predictions.keys()):
-        sub_score = np.array(predictions[subject]).sum() / len(predictions[subject])
-        voting_acc.append([1 if sub_score > 0.5 else 0])
+    # voting_acc = []
+    # for subject in list(predictions.keys()):
+    #     sub_score = np.array(predictions[subject]).sum() / len(predictions[subject])
+    #     voting_acc.append([1 if sub_score > 0.5 else 0])
 
     print('Validation Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
-    print('Voting Accuracy: {:.3f}'.format(np.mean(voting_acc)))
+    # print('Voting Accuracy: {:.3f}'.format(np.mean(voting_acc)))
     torch.save(model.state_dict(), checkpoint)

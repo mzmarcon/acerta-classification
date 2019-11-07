@@ -8,7 +8,7 @@ from nilearn import plotting
 from nilearn.connectome import ConnectivityMeasure
 import torch
 
-def preprocess_dataset(image_data,labels,ids):
+def preprocess_slices_dataset(image_data,labels,ids):
     '''
     Split images in slices.
 
@@ -66,3 +66,26 @@ def load_dataset(filenames, atlas_data, discard=False):
     # image_data = (image_data - np.min(image_data)) / (np.max(image_data) - np.min(image_data))
 
     return image_data
+
+
+def preprocess_volume_dataset(image_data,labels,ids):
+    '''
+    Split images in slices.
+
+    portion: portion of the axial slices that enter the dataset.
+    first  (x) = Left-to-Right -- Sagital
+    second (y) = Posterior-to-Anterior --Coronal
+    third  (z) = Inferior-to-Superior  --Axial [-orient LPI]
+    '''
+    dataset = []
+    for i, input_image in enumerate(image_data):
+        input_image = torch.FloatTensor(input_image)
+        input_image = input_image.permute(2, 0, 1)
+
+        dataset.append({
+            'image': input_image,
+            'label': labels[i],
+            'id': ids[i]
+        })
+    
+    return dataset

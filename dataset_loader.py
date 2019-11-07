@@ -47,9 +47,12 @@ class ACERTA_data(Dataset):
                                                     train_size=split, random_state=42, stratify=labels)
 
         if set == 'training':
-            self.dataset = preprocess_dataset(train_set, train_labels, train_ids)
+            # self.dataset = preprocess_slices_dataset(train_set, train_labels, train_ids)
+            self.dataset = preprocess_volume_dataset(train_set, train_labels, train_ids)
+            
         if set == 'validation':
-            self.dataset = preprocess_dataset(val_set, val_labels, val_ids)
+            # self.dataset = preprocess_slices_dataset(val_set, val_labels, val_ids)
+            self.dataset = preprocess_volume_dataset(val_set, val_labels, val_ids)
 
 
     def __getitem__(self, idx):
