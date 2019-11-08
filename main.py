@@ -15,9 +15,10 @@ checkpoint = 'checkpoints/checkpoint.pth'
 
 params = { 'train_batch_size': 4,
            'val_batch_size': 1,
-           'learning_rate': 1e-5,
+           'learning_rate': 3e-5,
            'weight_decay': 1e-1,
-           'epochs': 100 }
+           'epochs': 100,
+           'early_stop': 10 }
 
 
 training_set = ACERTA_data(set='training', split=0.8)
@@ -40,6 +41,8 @@ model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=params['learning_rate'],
                              weight_decay=params['weight_decay'])
 
+best_loss = np.inf
+loss_list = []
 for e in range(params['epochs']):
     print('Epoch:',e)
     print('Training...')
@@ -90,18 +93,21 @@ for e in range(params['epochs']):
         total_correct = correct.sum()
         accuracy.append(total_correct / label.shape[0])
 
-        # #voting classification
-        # for n in range(params['val_batch_size']): 
-        #     predictions[int(data['id'][n])].append(int(correct[n])) 
-
         if iterations % 4 == 0:
             print('Validation Loss: {:.3f}'.format(np.mean(val_loss)))
 
-    # voting_acc = []
-    # for subject in list(predictions.keys()):
-    #     sub_score = np.array(predictions[subject]).sum() / len(predictions[subject])
-    #     voting_acc.append([1 if sub_score > 0.5 else 0])
+    #early stop
+    loss_list.append(np.mean(val_loss))
+    if loss_list[-1] < best_loss:
+        best_loss = loss_list[-1]
+        loss_list = []
+        print('New best:',best_loss)
+    if len(loss_list) == params['early_stop']:
+        print('Early stopping.')
+        print('Validation Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
+        torch.save(model.state_dict(), checkpoint)    
+        break
 
+    print('List len:',len(loss_list))
     print('Validation Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
-    # print('Voting Accuracy: {:.3f}'.format(np.mean(voting_acc)))
     torch.save(model.state_dict(), checkpoint)
