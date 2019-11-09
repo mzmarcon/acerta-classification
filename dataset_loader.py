@@ -11,13 +11,13 @@ from utils import *
 
 class ACERTA_data(Dataset):
     def __init__(self, set, split=0.8, transform=None):
-        # data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
-        # mask_path = '/home/marcon/Documents/Data/SCHOOLS/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
-        # atlas_path = '/home/marcon/Documents/Data/niftis/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
+        data_path = '/home/marcon/Documents/Data/acerta_data/acerta_TASK/'
+        mask_path = '/home/marcon/Documents/Data/SCHOOLS/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        atlas_path = '/home/marcon/Documents/Data/niftis/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
 
-        data_path = '/home/marcon/datasets/acerta_data/acerta_TASK/'
-        mask_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
-        atlas_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
+        # data_path = '/home/marcon/datasets/acerta_data/acerta_TASK/'
+        # mask_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        # atlas_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
         
         mask_data = nib.load(mask_path).get_fdata()
         atlas_data = nib.load(atlas_path).get_fdata()
@@ -33,7 +33,6 @@ class ACERTA_data(Dataset):
         else:
             control_paths = control_paths[:len(condition_paths)]
         
-        #TODO read data from csv
         ids = [i for i in range(len(control_paths+condition_paths))]
         labels = [0] * len(control_paths) + [1] * len(condition_paths)
         
@@ -54,6 +53,48 @@ class ACERTA_data(Dataset):
             # self.dataset = preprocess_slices_dataset(val_set, val_labels, val_ids)
             self.dataset = preprocess_volume_dataset(val_set, val_labels, val_ids)
 
+
+    def __getitem__(self, idx):
+        data = self.dataset[idx]
+
+        return {
+            'input' : torch.FloatTensor(data['image']),
+            'label' : data['label'],
+            'id'    : data['id']
+        }
+
+
+    def __len__(self):
+        return len(self.dataset)
+
+
+
+class TEST_data(Dataset):
+    def __init__(self, data_path):
+        data_path = data_path
+        # mask_path = '/home/marcon/Documents/Data/SCHOOLS/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        # atlas_path = '/home/marcon/Documents/Data/niftis/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
+
+        # data_path = '/home/marcon/datasets/acerta_data/acerta_TASK/'
+        mask_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_template_3x3x3_maskRESAMPLED.nii'
+        atlas_path = '/home/marcon/docs/Data/Masks/HaskinsPeds_NL_atlasRESAMPLED1.0.nii'
+        
+        atlas_data = nib.load(atlas_path).get_fdata()
+        
+        self.dataset = []
+
+        control_paths = glob(data_path + 'TEST/' + '*SCH*.nii.gz')
+        condition_paths = glob(data_path + 'TEST/' + '*AMBAC*.nii.gz')
+
+        ids = [i for i in range(len(control_paths+condition_paths))]
+        labels = [0] * len(control_paths) + [1] * len(condition_paths)
+        
+        #load data
+        file_paths = control_paths + condition_paths
+
+        image_data = load_dataset(file_paths, atlas_data, discard=True)
+
+        self.dataset = preprocess_volume_dataset(image_data, labels, ids)
 
     def __getitem__(self, idx):
         data = self.dataset[idx]

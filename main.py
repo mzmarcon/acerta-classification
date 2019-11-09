@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 from collections import defaultdict
 from dataset_loader import ACERTA_data 
-from model import VGGBasedModel2D, VGGBased2, VGGVolume2D
+from model import VGGBased13
 import sys 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -15,7 +15,7 @@ checkpoint = 'checkpoints/checkpoint.pth'
 
 params = { 'train_batch_size': 4,
            'val_batch_size': 1,
-           'learning_rate': 3e-5,
+           'learning_rate': 2e-5,
            'weight_decay': 1e-1,
            'epochs': 100,
            'early_stop': 10 }
@@ -33,19 +33,18 @@ val_loader = DataLoader(validation_set, shuffle=False, drop_last=False,
 # criterion = nn.BCELoss()
 criterion = nn.BCEWithLogitsLoss()
 
-# model = VGGBasedModel2D()
-# model = VGGBased2()
-model = VGGVolume2D()
+model = VGGBased13()
 model.to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=params['learning_rate'],
                              weight_decay=params['weight_decay'])
 
-best_loss = np.inf
+# scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3,5,10], gamma=0.1)
+
+best_loss = np.inf  
 loss_list = []
 for e in range(params['epochs']):
     print('Epoch:',e)
-    print('Training...')
     model.train()
     losses = []
     accuracy = []
@@ -68,12 +67,14 @@ for e in range(params['epochs']):
         total_correct = correct.sum()
         accuracy.append((total_correct / label.shape[0]))
 
-        if iterations % 5 == 0:
-            print('Training Loss: {:.3f}'.format(np.mean(losses)))
+        # if iterations % 5 == 0:
+            # print('Training Loss: {:.3f}'.format(np.mean(losses)))
 
-    print('Training Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
+    # print('Training Loss: {:.3f}'.format(np.mean(losses)))
+    # print('Training Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
 
-    print('Validation...')
+    print('Training Loss:   {:.3f} - Accuracy: {:.3f}'.format(np.mean(losses),torch.mean(torch.stack(accuracy))))
+
     model.eval()
     val_loss = []
     accuracy = []
@@ -93,21 +94,24 @@ for e in range(params['epochs']):
         total_correct = correct.sum()
         accuracy.append(total_correct / label.shape[0])
 
-        if iterations % 4 == 0:
-            print('Validation Loss: {:.3f}'.format(np.mean(val_loss)))
+        # if iterations % 4 == 0:
+        #     print('Validation Loss: {:.3f}'.format(np.mean(val_loss)))
 
     #early stop
     loss_list.append(np.mean(val_loss))
     if loss_list[-1] < best_loss:
         best_loss = loss_list[-1]
         loss_list = []
-        print('New best:',best_loss)
+        # print('New best:',best_loss)
     if len(loss_list) == params['early_stop']:
         print('Early stopping.')
-        print('Validation Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
+        print('Validation Loss: {:.3f} - Accuracy: {:.3f}'.format(np.mean(val_loss),
+                                                                  torch.mean(torch.stack(accuracy))))
         torch.save(model.state_dict(), checkpoint)    
         break
 
-    print('List len:',len(loss_list))
-    print('Validation Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
+    # print('List len:',len(loss_list))
+    # print('Validation Accuracy: {:.3f}'.format(torch.mean(torch.stack(accuracy))))
+    print('Validation Loss: {:.3f} - Accuracy: {:.3f}'.format(np.mean(val_loss),
+                                                              torch.mean(torch.stack(accuracy))))
     torch.save(model.state_dict(), checkpoint)
